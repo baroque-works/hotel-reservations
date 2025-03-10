@@ -67,6 +67,15 @@ class ReservationController
             $page = $totalPages;
         }
 
+        extract([
+            'reservations' => $reservations,
+            'totalReservations' => $totalReservations,
+            'totalPages' => $totalPages,
+            'page' => $page,
+            'searchTerm' => $searchTerm,
+            'request' => $request,
+        ]);
+
         include __DIR__ . '/../Template/reservation_list.php';
     }
 

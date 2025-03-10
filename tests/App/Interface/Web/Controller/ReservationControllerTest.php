@@ -177,4 +177,100 @@ class ReservationControllerTest extends TestCase
         ], JSON_PRETTY_PRINT);
         $this->assertEquals($expectedJson, $response->getContent());
     }
+
+    public function testReservationIsInvalidWithIncorrectDates(): void
+    {
+        $reservation = new Reservation(
+            '34637',
+            'Nombre1',
+            new \DateTime('2018-10-05'),
+            new \DateTime('2018-10-04'),
+            'Hotel4',
+            112.49,
+            'view'
+        );
+
+        $this->assertFalse($reservation->isValid());
+        $this->assertContains('La fecha de salida debe ser igual o posterior a la fecha de entrada', $reservation->getValidationErrors());
+    }
+
+    public function testReservationIsValidWithSameDayDates(): void
+    {
+        $reservation = new Reservation(
+            '34637',
+            'Nombre1',
+            new \DateTime('2018-10-04'),
+            new \DateTime('2018-10-04'),
+            'Hotel4',
+            112.49,
+            'view'
+        );
+
+        $this->assertTrue($reservation->isValid());
+        $this->assertEmpty($reservation->getValidationErrors());
+    }
+
+    public function testReservationIsInvalidWithEmptyLocator(): void
+    {
+        $reservation = new Reservation(
+            '',
+            'Nombre1',
+            new \DateTime('2018-10-04'),
+            new \DateTime('2018-10-05'),
+            'Hotel4',
+            112.49,
+            'view'
+        );
+
+        $this->assertFalse($reservation->isValid());
+        $this->assertContains('El localizador no puede estar vacío', $reservation->getValidationErrors());
+    }
+
+    public function testReservationIsInvalidWithMissingPrice(): void
+    {
+        $reservation = new Reservation(
+            '34637',
+            'Nombre1',
+            new \DateTime('2018-10-04'),
+            new \DateTime('2018-10-05'),
+            'Hotel4',
+            null,
+            'view'
+        );
+
+        $this->assertFalse($reservation->isValid());
+        $this->assertContains('Falta el precio', $reservation->getValidationErrors());
+    }
+
+    public function testReservationIsInvalidWithMissingPriceForChargeable(): void
+    {
+        $reservation = new Reservation(
+            '34637',
+            'Nombre1',
+            new \DateTime('2018-10-04'),
+            new \DateTime('2018-10-05'),
+            'Hotel4',
+            null,
+            'charge'
+        );
+
+        $this->assertFalse($reservation->isValid());
+        $this->assertContains('El precio es obligatorio para reservas cobrables', $reservation->getValidationErrors());
+    }
+
+    public function testReservationIsValid(): void
+    {
+        $reservation = new Reservation(
+            '34637',
+            'Nombre1',
+            new \DateTime('2018-10-04'),
+            new \DateTime('2018-10-05'),
+            'Hotel4',
+            112.49,
+            'view'
+        );
+
+        $this->assertTrue($reservation->isValid());
+        $this->assertEmpty($reservation->getValidationErrors());
+    }
 }

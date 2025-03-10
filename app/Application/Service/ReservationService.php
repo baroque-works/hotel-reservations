@@ -12,9 +12,11 @@ class ReservationService
     }
 
     /**
-     * Get all reservations
+     * Get all reservations with pagination and validation
      *
-     * @return Reservation[]
+     * @param int $page The page number
+     * @param int $limit The number of items per page
+     * @return array ['reservations' => Reservation[], 'total' => int]
      */
     public function getPaginatedReservations(int $page = 1, int $limit = 20): array
     {
@@ -26,11 +28,11 @@ class ReservationService
     }
 
     /**
-     * Find reservations for searchTerm and get paginated results
+     * Find reservations for searchTerm and get paginated results with validation
      *
-     * @param string $searchTerm
-     * @param int $page
-     * @param int $limit
+     * @param string $searchTerm The term to search for
+     * @param int $page The page number
+     * @param int $limit The number of items per page
      * @return array ['reservations' => Reservation[], 'total' => int]
      */
     public function searchReservations(string $searchTerm, int $page = 1, int $limit = 20): array

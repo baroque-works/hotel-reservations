@@ -3,10 +3,12 @@
 namespace App\Domain\Model;
 
 /**
- *  Hotel reservation Class
+ * Hotel reservation class
  */
 class Reservation
 {
+    private array $validationErrors = [];
+
     public function __construct(
         private string $locator,
         private string $guest,
@@ -16,6 +18,43 @@ class Reservation
         private ?float $price,
         private string $possibleActions
     ) {
+        $this->validate();
+    }
+
+    /**
+     * Validates the reservation data and stores errors if any.
+     */
+    private function validate(): void
+    {
+        $this->validationErrors = [];
+
+        // Validar campos obligatorios
+        if (empty(trim($this->locator))) {
+            $this->validationErrors[] = 'El localizador no puede estar vacío';
+        }
+        if (empty(trim($this->guest))) {
+            $this->validationErrors[] = 'El nombre del huésped no puede estar vacío';
+        }
+        if (empty(trim($this->hotel))) {
+            $this->validationErrors[] = 'El nombre del hotel no puede estar vacío';
+        }
+        if (empty(trim($this->possibleActions))) {
+            $this->validationErrors[] = 'Las acciones posibles no pueden estar vacías';
+        }
+        if ($this->price === null) {
+            $this->validationErrors[] = 'Falta el precio';
+        }
+
+        if ($this->checkOutDate < $this->checkInDate) {
+            $this->validationErrors[] = 'La fecha de salida debe ser igual o posterior a la fecha de entrada';
+        }
+
+        if ($this->price !== null && $this->price < 0) {
+            $this->validationErrors[] = 'El precio no puede ser negativo';
+        }
+        if ($this->price === null && str_contains(strtolower($this->possibleActions), 'charge')) {
+            $this->validationErrors[] = 'El precio es obligatorio para reservas cobrables';
+        }
     }
 
     /**
@@ -39,7 +78,7 @@ class Reservation
      */
     public function getCheckInDate(): \DateTime
     {
-        return $this->checkInDate;
+        return clone $this->checkInDate;
     }
 
     /**
@@ -47,7 +86,7 @@ class Reservation
      */
     public function getCheckOutDate(): \DateTime
     {
-        return $this->checkOutDate;
+        return clone $this->checkOutDate;
     }
 
     /**
@@ -73,9 +112,11 @@ class Reservation
     {
         return $this->possibleActions;
     }
-    
+
     /**
      * Turns reservation into an array for serialization
+     *
+     * @return array
      */
     public function toArray(): array
     {
@@ -89,18 +130,21 @@ class Reservation
             'possible_actions' => $this->possibleActions
         ];
     }
-    
+
     /**
      * Verifies if reservation contains the search chain in some field
+     *
+     * @param string $searchTerm The term to search for
+     * @return bool
      */
     public function matchesSearchTerm(string $searchTerm): bool
     {
         if (empty($searchTerm)) {
             return true;
         }
-        
+
         $searchTerm = strtolower($searchTerm);
-        
+
         return str_contains(strtolower($this->locator), $searchTerm) ||
                str_contains(strtolower($this->guest), $searchTerm) ||
                str_contains(strtolower($this->checkInDate->format('Y-m-d')), $searchTerm) ||
@@ -112,6 +156,8 @@ class Reservation
 
     /**
      * Converts the reservation into a CSV line
+     *
+     * @return string
      */
     public function toCsv(): string
     {
@@ -124,5 +170,26 @@ class Reservation
             $this->price !== null ? (string)$this->price : '',
             $this->possibleActions
         ]);
+    }
+
+    /**
+     * Checks if the reservation is valid according to business rules
+     *
+     * @return bool
+     */
+    public function isValid(): bool
+    {
+        $this->validate();
+        return empty($this->validationErrors);
+    }
+
+    /**
+     * Returns validation errors, if any
+     *
+     * @return string[]
+     */
+    public function getValidationErrors(): array
+    {
+        return $this->validationErrors;
     }
 }

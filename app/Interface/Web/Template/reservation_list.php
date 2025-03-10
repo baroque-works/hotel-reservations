@@ -12,6 +12,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .invalid-reservation {
+            background-color: #fff3f3;
+        }
+    </style>
 </head>
 <body>
     <div class="header-container">
@@ -52,16 +57,22 @@
                             <th>Hotel</th>
                             <th>Precio</th>
                             <th>Acciones</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($reservations) && $page == 1): ?>
                             <tr>
-                                <td colspan="7" class="text-center">No se encontraron reservas</td>
+                                <td colspan="8" class="text-center">No se encontraron reservas</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($reservations as $reservation): ?>
-                                <tr>
+                                <?php
+                                $isValid = $reservation->isValid();
+                                $errors = $reservation->getValidationErrors();
+                                $errorMessage = $isValid ? '' : implode(', ', $errors);
+                                ?>
+                                <tr class="<?= $isValid ? '' : 'invalid-reservation' ?>">
                                     <td><?= htmlspecialchars($reservation->getLocator()) ?></td>
                                     <td><?= htmlspecialchars($reservation->getGuest()) ?></td>
                                     <td><?= $reservation->getCheckInDate()->format('d/m/Y') ?></td>
@@ -69,52 +80,63 @@
                                     <td><?= htmlspecialchars($reservation->getHotel()) ?></td>
                                     <td><?= $reservation->getPrice() !== null ? number_format($reservation->getPrice(), 2, ',', '.') . ' €' : '-' ?></td>
                                     <td>
-                                        <a href="#" class="action-icon" data-bs-toggle="modal" data-bs-target="#chargeModal<?= $reservation->getLocator() ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Cobrar">
-                                            <i class="bi bi-credit-card"></i>
-                                        </a>
-                                        <a href="#" class="action-icon" data-bs-toggle="modal" data-bs-target="#refundModal<?= $reservation->getLocator() ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Devolver">
-                                            <i class="bi bi-arrow-counterclockwise"></i>
-                                        </a>
+                                        <?php if ($isValid): ?>
+                                            <a href="#" class="action-icon" data-bs-toggle="modal" data-bs-target="#chargeModal<?= $reservation->getLocator() ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Cobrar">
+                                                <i class="bi bi-credit-card"></i>
+                                            </a>
+                                            <a href="#" class="action-icon" data-bs-toggle="modal" data-bs-target="#refundModal<?= $reservation->getLocator() ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Devolver">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </a>
 
-                                        <div class="modal fade" id="chargeModal<?= $reservation->getLocator() ?>" tabindex="-1" aria-labelledby="chargeModalLabel<?= $reservation->getLocator() ?>" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="chargeModalLabel<?= $reservation->getLocator() ?>">Confirmar Cobro</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        ¿Seguro que quiere cobrar la reservación <?= htmlspecialchars($reservation->getLocator()) ?>?
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Confirmar</button>
+                                            <div class="modal fade" id="chargeModal<?= $reservation->getLocator() ?>" tabindex="-1" aria-labelledby="chargeModalLabel<?= $reservation->getLocator() ?>" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="chargeModalLabel<?= $reservation->getLocator() ?>">Confirmar Cobro</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            ¿Seguro que quiere cobrar la reservación <?= htmlspecialchars($reservation->getLocator()) ?>?
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Confirmar</button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div class="modal fade" id="refundModal<?= $reservation->getLocator() ?>" tabindex="-1" aria-labelledby="refundModalLabel<?= $reservation->getLocator() ?>" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="refundModalLabel<?= $reservation->getLocator() ?>">Confirmar Devolución</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        ¿Seguro que quiere devolver la reservación <?= htmlspecialchars($reservation->getLocator()) ?>?
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Confirmar</button>
+                                            <div class="modal fade" id="refundModal<?= $reservation->getLocator() ?>" tabindex="-1" aria-labelledby="refundModalLabel<?= $reservation->getLocator() ?>" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="refundModalLabel<?= $reservation->getLocator() ?>">Confirmar Devolución</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            ¿Seguro que quiere devolver la reservación <?= htmlspecialchars($reservation->getLocator()) ?>?
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Confirmar</button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        <?php else: ?>
+                                            <span>-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($isValid): ?>
+                                            <i class="bi bi-check-circle text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Reserva válida"></i>
+                                        <?php else: ?>
+                                            <i class="bi bi-exclamation-triangle text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="<?= htmlspecialchars($errorMessage) ?>"></i>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
-                        <?php endif; ?>                    
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
