@@ -3,8 +3,8 @@
 namespace Tests\App\Interface\Web\Controller;
 
 use App\Application\Service\ReservationService;
-use App\Interface\Web\Controller\ReservationController;
 use App\Domain\Model\Reservation;
+use App\Interface\Web\Controller\ReservationController;
 use PHPUnit\Framework\TestCase;
 
 class ReservationControllerTest extends TestCase

@@ -34,7 +34,7 @@ class CsvReservationRepository implements ReservationRepositoryInterface
             return $this->cachedReservations;
         }
 
-        return array_filter($this->cachedReservations, fn(Reservation $reservation) => stripos($reservation->getHotel(), $searchTerm) !== false || stripos($reservation->getGuest(), $searchTerm) !== false);
+        return array_filter($this->cachedReservations, fn (Reservation $reservation) => stripos($reservation->getHotel(), $searchTerm) !== false || stripos($reservation->getGuest(), $searchTerm) !== false);
     }
 
     /**
@@ -86,18 +86,18 @@ class CsvReservationRepository implements ReservationRepositoryInterface
             }
 
             $fields = str_getcsv($row, ';', '"', '');
-            
+
             if (count($fields) >= 7) {
                 try {
                     $checkInDate = \DateTime::createFromFormat('Y-m-d', $fields[2]);
                     $checkOutDate = \DateTime::createFromFormat('Y-m-d', $fields[3]);
-                    
+
                     if ($checkInDate === false || $checkOutDate === false) {
                         continue;
                     }
-                    
+
                     $price = !empty($fields[5]) ? (float)str_replace(',', '.', $fields[5]) : null;
-                    
+
                     $reservations[] = new Reservation(
                         $fields[0],
                         $fields[1],
@@ -108,7 +108,7 @@ class CsvReservationRepository implements ReservationRepositoryInterface
                         $fields[6]
                     );
                 } catch (\Exception $e) {
-                    error_log("Error parsing row: " . $row . " - " . $e->getMessage());
+                    error_log('Error parsing row: ' . $row . ' - ' . $e->getMessage());
                     continue;
                 }
             }

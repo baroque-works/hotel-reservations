@@ -1,4 +1,4 @@
-FROM php:8.1-apache
+FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
   git \
@@ -21,9 +21,11 @@ WORKDIR /var/www/html
 
 COPY . /var/www/html/
 
-RUN chown -R www-data:www-data /var/www/html
+RUN git config --global --add safe.directory /var/www/html
 
 RUN composer install --no-interaction --no-plugins --no-scripts --verbose && ls -la /var/www/html/vendor/autoload.php
+
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
 

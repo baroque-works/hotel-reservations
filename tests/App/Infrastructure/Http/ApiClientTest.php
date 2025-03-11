@@ -4,7 +4,6 @@ namespace Tests\App\Infrastructure\Http;
 
 use App\Infrastructure\Http\ApiClient;
 use GuzzleHttp\Client;
-use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;

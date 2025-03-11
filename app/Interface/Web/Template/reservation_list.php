@@ -153,15 +153,15 @@
                         </li>
                         <?php
                         $maxPagesToShow = 5;
-                        $halfPages = floor($maxPagesToShow / 2);
-                        $startPage = max(1, $page - $halfPages);
-                        $endPage = min($totalPages, $startPage + $maxPagesToShow - 1);
+            $halfPages = floor($maxPagesToShow / 2);
+            $startPage = max(1, $page - $halfPages);
+            $endPage = min($totalPages, $startPage + $maxPagesToShow - 1);
 
-                        if ($endPage - $startPage + 1 < $maxPagesToShow) {
-                            $startPage = max(1, $endPage - $maxPagesToShow + 1);
-                        }
+            if ($endPage - $startPage + 1 < $maxPagesToShow) {
+                $startPage = max(1, $endPage - $maxPagesToShow + 1);
+            }
 
-                        if ($startPage > 1): ?>
+            if ($startPage > 1): ?>
                             <li class="page-item">
                                 <a class="page-link" href="?<?= http_build_query(array_merge($request ?? [], ['page' => 1, 'search' => $searchTerm ?? ''])) ?>">1</a>
                             </li>

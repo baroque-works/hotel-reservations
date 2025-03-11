@@ -18,7 +18,7 @@ class ApiClient
         ?Client $httpClient = null
     ) {
         $this->cookieJar = new CookieJar();
-        
+
         // Uses given client or create a new one
         $this->httpClient = $httpClient ?? new Client([
             'base_uri' => rtrim($this->baseUrl, '/'),
@@ -42,13 +42,13 @@ class ApiClient
             $response = $this->httpClient->get('/');
             return (string) $response->getBody();
         } catch (GuzzleException $e) {
-            $errorMessage = "Error fetching CSV data: " . $e->getMessage();
-            
+            $errorMessage = 'Error fetching CSV data: ' . $e->getMessage();
+
             if (method_exists($e, 'getResponse') && $e->getResponse()) {
                 $errorMessage .= "\nStatus Code: " . $e->getResponse()->getStatusCode();
-                $errorMessage .= "\nResponse Body: " . substr($e->getResponse()->getBody(), 0, 500) . "...";
+                $errorMessage .= "\nResponse Body: " . substr($e->getResponse()->getBody(), 0, 500) . '...';
             }
-            
+
             throw new \RuntimeException($errorMessage, 0, $e);
         }
     }
@@ -60,16 +60,16 @@ class ApiClient
         $loginPageHtml = (string) $loginPageResponse->getBody();
 
         file_put_contents('login_page.html', $loginPageHtml);
-        
+
         // 2. Extract form data
         $formParams = $this->extractFormFields($loginPageHtml);
-        
+
         // 3. Add credentials
         $formParams['Username'] = $this->username;
         $formParams['Password'] = $this->password;
 
-        error_log("Form params: " . print_r($formParams, true));
-        
+        error_log('Form params: ' . print_r($formParams, true));
+
         // 4. Send Form
         $response = $this->httpClient->post('/', [
             'form_params' => $formParams,
@@ -79,19 +79,19 @@ class ApiClient
             ],
             'allow_redirects' => true,
         ]);
-        
+
         // 5. Verifies successful login
         if ($response->getStatusCode() !== 200) {
-            throw new \RuntimeException("Login failed with status code: " . $response->getStatusCode());
+            throw new \RuntimeException('Login failed with status code: ' . $response->getStatusCode());
         }
 
-        error_log("Cookies after login: " . print_r($this->cookieJar->toArray(), true));
+        error_log('Cookies after login: ' . print_r($this->cookieJar->toArray(), true));
     }
 
     private function extractFormFields(string $html): array
     {
         $formParams = [];
-        
+
         // Extract hidden fields or CSRF tokens
         $pattern = '/<input[^>]*name=["\']([^"\']*)["\'][^>]*value=["\']([^"\']*)["\'][^>]*>/i';
         if (preg_match_all($pattern, $html, $matches, PREG_SET_ORDER)) {
@@ -99,7 +99,7 @@ class ApiClient
                 $formParams[$match[1]] = $match[2];
             }
         }
-        
+
         return $formParams;
     }
 }
