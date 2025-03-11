@@ -20,7 +20,21 @@ This application displays a list of hotel reservations obtained from an external
    cd hotel-reservations
    ```
 
-2. **Build and run the Docker container**:
+2. **Set up environment variables**:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit the .env file with your API credentials:
+
+   ```
+   API_BASE_URL=https://tech-test.wamdev.net
+   API_USERNAME=your_username
+   API_PASSWORD=your_password
+   ```
+
+3. **Build and run the Docker container**:
 
    ```bash
    docker-compose up --build
@@ -28,9 +42,9 @@ This application displays a list of hotel reservations obtained from an external
 
    This will build the Docker image and start the application on port 8080. Ensure sufficient memory allocation (e.g., mem_limit: 1g in docker-compose.yml) to handle large datasets.
 
-3. **Access the application**: Open a web browser and visit http://localhost:8080.
+4. **Access the application**: Open a web browser and visit http://localhost:8080.
 
-4. **Stop the container (when done)**:
+5. **Stop the container (when done)**:
    ```bash
    docker-compose down
    ```
@@ -59,7 +73,7 @@ This application displays a list of hotel reservations obtained from an external
 4. **Edit .env with your credentials**:
 
    ```
-   API_BASE_URL=https://api.example.com
+   API_BASE_URL=https://tech-test.wamdev.net
    API_USERNAME=your_username
    API_PASSWORD=your_password
    ```
@@ -160,7 +174,7 @@ To ensure code quality, the project uses PHPStan for static analysis:
 
 The application uses environment variables for configuration, managed via a `.env` file. Required variables:
 
-- **API_BASE_URL**: Base URL of the external API (e.g., https://api.example.com).
+- **API_BASE_URL**: Base URL of the external API (https://tech-test.wamdev.net).
 - **API_USERNAME**: Username for API authentication.
 - **API_PASSWORD**: Password for API authentication.
 - **APP_DEBUG**: Set to true for debug mode, false for production (default: false).
@@ -168,7 +182,7 @@ The application uses environment variables for configuration, managed via a `.en
 Example `.env` file:
 
 ```
-API_BASE_URL=https://api.example.com
+API_BASE_URL=https://tech-test.wamdev.net
 API_USERNAME=your_username
 API_PASSWORD=your_password
 APP_DEBUG=true
