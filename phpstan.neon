@@ -1,0 +1,9 @@
+cat > phpstan.neon << 'EOF'
+parameters:
+    level: 1
+    paths:
+        - app
+        - tests
+    ignoreErrors:
+        - '#Call to an undefined method#'
+EOF

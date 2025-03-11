@@ -5,6 +5,7 @@ namespace Tests\App\Interface\Web\Controller;
 use App\Application\Service\ReservationService;
 use App\Domain\Model\Reservation;
 use App\Interface\Web\Controller\ReservationController;
+use App\Interface\Web\Controller\Response;
 use PHPUnit\Framework\TestCase;
 
 class ReservationControllerTest extends TestCase
@@ -22,7 +23,15 @@ class ReservationControllerTest extends TestCase
     {
         $request = ['page' => '1'];
         $reservations = [
-            new Reservation('34637', 'Nombre1', new \DateTime('2018-10-04'), new \DateTime('2018-10-05'), 'Hotel4', 112.49, 'view'),
+            new Reservation(
+                '34637',
+                'Nombre1',
+                new \DateTime('2018-10-04'),
+                new \DateTime('2018-10-05'),
+                'Hotel4',
+                112.49,
+                'view'
+            ),
         ];
         $result = [
             'reservations' => $reservations,
@@ -46,7 +55,15 @@ class ReservationControllerTest extends TestCase
     {
         $request = ['search' => 'Hotel4', 'page' => '2'];
         $reservationsPage1 = [
-            new Reservation('34637', 'Nombre1', new \DateTime('2018-10-04'), new \DateTime('2018-10-05'), 'Hotel4', 112.49, 'view'),
+            new Reservation(
+                '34637',
+                'Nombre1',
+                new \DateTime('2018-10-04'),
+                new \DateTime('2018-10-05'),
+                'Hotel4',
+                112.49,
+                'view'
+            ),
         ];
         $resultPage1 = [
             'reservations' => $reservationsPage1,
@@ -107,7 +124,15 @@ class ReservationControllerTest extends TestCase
     public function testDownloadJsonActionWithNoSearch(): void
     {
         $reservations = [
-            new Reservation('34637', 'Nombre1', new \DateTime('2018-10-04'), new \DateTime('2018-10-05'), 'Hotel4', 112.49, 'view'),
+            new Reservation(
+                '34637',
+                'Nombre1',
+                new \DateTime('2018-10-04'),
+                new \DateTime('2018-10-05'),
+                'Hotel4',
+                112.49,
+                'view'
+            ),
         ];
         $result = [
             'reservations' => $reservations,
@@ -119,14 +144,15 @@ class ReservationControllerTest extends TestCase
             ->with(1, PHP_INT_MAX)
             ->willReturn($result);
 
-        $response = $this->controller->downloadJsonAction([]);
+        $generator = $this->controller->downloadJsonAction([]);
 
-        $expectedHeaders = [
-            'Content-Type: application/json',
-            'Content-Disposition: attachment; filename="reservations.json"',
-        ];
-        $this->assertEquals($expectedHeaders, $response->getHeaders());
+        // Process the generator to build the output
+        $output = '';
+        foreach ($generator as $chunk) {
+            $output .= $chunk;
+        }
 
+        // Verify the output
         $expectedJson = json_encode([
             [
                 'locator' => '34637',
@@ -136,15 +162,23 @@ class ReservationControllerTest extends TestCase
                 'hotel' => 'Hotel4',
                 'price' => 112.49,
                 'possibleActions' => 'view',
-            ]
+            ],
         ], JSON_PRETTY_PRINT);
-        $this->assertEquals($expectedJson, $response->getContent());
+        $this->assertJsonStringEqualsJsonString($expectedJson, $output);
     }
 
     public function testDownloadJsonActionWithSearch(): void
     {
         $reservations = [
-            new Reservation('34637', 'Nombre1', new \DateTime('2018-10-04'), new \DateTime('2018-10-05'), 'Hotel4', 112.49, 'view'),
+            new Reservation(
+                '34637',
+                'Nombre1',
+                new \DateTime('2018-10-04'),
+                new \DateTime('2018-10-05'),
+                'Hotel4',
+                112.49,
+                'view'
+            ),
         ];
         $result = [
             'reservations' => $reservations,
@@ -156,14 +190,15 @@ class ReservationControllerTest extends TestCase
             ->with('Hotel4', 1, PHP_INT_MAX)
             ->willReturn($result);
 
-        $response = $this->controller->downloadJsonAction(['search' => 'Hotel4']);
+        $generator = $this->controller->downloadJsonAction(['search' => 'Hotel4']);
 
-        $expectedHeaders = [
-            'Content-Type: application/json',
-            'Content-Disposition: attachment; filename="reservations.json"',
-        ];
-        $this->assertEquals($expectedHeaders, $response->getHeaders());
+        // Process the generator to build the output
+        $output = '';
+        foreach ($generator as $chunk) {
+            $output .= $chunk;
+        }
 
+        // Verify the output
         $expectedJson = json_encode([
             [
                 'locator' => '34637',
@@ -173,9 +208,29 @@ class ReservationControllerTest extends TestCase
                 'hotel' => 'Hotel4',
                 'price' => 112.49,
                 'possibleActions' => 'view',
-            ]
+            ],
         ], JSON_PRETTY_PRINT);
-        $this->assertEquals($expectedJson, $response->getContent());
+        $this->assertJsonStringEqualsJsonString($expectedJson, $output);
+    }
+
+    public function testDownloadJsonActionWithError(): void
+    {
+        $this->mockService->expects($this->once())
+            ->method('getPaginatedReservations')
+            ->with(1, PHP_INT_MAX)
+            ->willThrowException(new \RuntimeException('Test error'));
+
+        $generator = $this->controller->downloadJsonAction([]);
+
+        // Process the generator to build the output
+        $output = '';
+        foreach ($generator as $chunk) {
+            $output .= $chunk;
+        }
+
+        // Verify the output
+        $expectedJson = json_encode(['error' => 'Error al generar el JSON: Test error']);
+        $this->assertJsonStringEqualsJsonString($expectedJson, $output);
     }
 
     public function testReservationIsInvalidWithIncorrectDates(): void
@@ -191,7 +246,10 @@ class ReservationControllerTest extends TestCase
         );
 
         $this->assertFalse($reservation->isValid());
-        $this->assertContains('La fecha de salida debe ser igual o posterior a la fecha de entrada', $reservation->getValidationErrors());
+        $this->assertContains(
+            'La fecha de salida debe ser igual o posterior a la fecha de entrada',
+            $reservation->getValidationErrors()
+        );
     }
 
     public function testReservationIsValidWithSameDayDates(): void
@@ -223,7 +281,10 @@ class ReservationControllerTest extends TestCase
         );
 
         $this->assertFalse($reservation->isValid());
-        $this->assertContains('El localizador no puede estar vacío', $reservation->getValidationErrors());
+        $this->assertContains(
+            'El localizador no puede estar vacío',
+            $reservation->getValidationErrors()
+        );
     }
 
     public function testReservationIsInvalidWithMissingPrice(): void
@@ -239,7 +300,10 @@ class ReservationControllerTest extends TestCase
         );
 
         $this->assertFalse($reservation->isValid());
-        $this->assertContains('Falta el precio', $reservation->getValidationErrors());
+        $this->assertContains(
+            'Falta el precio',
+            $reservation->getValidationErrors()
+        );
     }
 
     public function testReservationIsInvalidWithMissingPriceForChargeable(): void
@@ -255,7 +319,10 @@ class ReservationControllerTest extends TestCase
         );
 
         $this->assertFalse($reservation->isValid());
-        $this->assertContains('El precio es obligatorio para reservas cobrables', $reservation->getValidationErrors());
+        $this->assertContains(
+            'El precio es obligatorio para reservas cobrables',
+            $reservation->getValidationErrors()
+        );
     }
 
     public function testReservationIsValid(): void

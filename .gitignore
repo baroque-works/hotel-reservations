@@ -15,6 +15,7 @@
 .cache
 .phpunit.result.cache
 composer.phar
+testdox.html
 
 *.log
 apache2/

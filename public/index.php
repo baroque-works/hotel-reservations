@@ -23,7 +23,7 @@ $debug = $appConfig->isDebug();
 if ($debug) {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
-    error_log("ENV: " . print_r($_ENV, true));
+    error_log('ENV: ' . print_r($_ENV, true));
 }
 
 // Create dependencies
@@ -62,28 +62,43 @@ switch ($routeInfo[0]) {
         http_response_code(404);
         echo 'Página no encontrada';
         break;
-        
+
     case Dispatcher::METHOD_NOT_ALLOWED:
         http_response_code(405);
         echo 'Método no permitido';
         break;
-        
+
     case Dispatcher::FOUND:
         $handler = $routeInfo[1];
         $vars = $routeInfo[2];
-        
+
         $request = array_merge($vars, $_GET, $_POST);
-        
+
         if ($handler['controller'] === 'reservation') {
             if ($handler['action'] === 'list') {
                 $reservationController->listAction($request);
             } elseif ($handler['action'] === 'downloadJson') {
-                $response = $reservationController->downloadJsonAction($request);
-                if ($response instanceof Response) {
-                    $response->send();
+                $generator = $reservationController->downloadJsonAction($request);
+
+                header('Content-Type: application/json');
+                header('Content-Disposition: attachment; filename="reservations.json"');
+
+                $output = '';
+                $hasError = false;
+                foreach ($generator as $chunk) {
+                    $output .= $chunk;
+                    if (str_contains($chunk, '"error"')) {
+                        $hasError = true;
+                        break;
+                    }
+                }
+
+                if ($hasError) {
+                    header('Content-Type: application/json', true, 500);
+                    echo $output;
                 } else {
-                    http_response_code(500);
-                    echo 'Error: Respuesta inesperada';
+                    echo $output;
+                    flush();
                 }
             }
         }

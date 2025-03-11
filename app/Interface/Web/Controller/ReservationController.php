@@ -4,37 +4,7 @@ namespace App\Interface\Web\Controller;
 
 use App\Application\Service\ReservationService;
 use App\Domain\Model\Reservation;
-
-class Response
-{
-    private $headers;
-    private $content;
-
-    public function __construct(array $headers, string $content)
-    {
-        $this->headers = $headers;
-        $this->content = $content;
-    }
-
-    public function getHeaders(): array
-    {
-        return $this->headers;
-    }
-
-    public function getContent(): string
-    {
-        return $this->content;
-    }
-
-    public function send(): void
-    {
-        foreach ($this->headers as $header) {
-            header($header);
-        }
-        echo $this->content;
-        exit;
-    }
-}
+use Generator;
 
 class ReservationController
 {
@@ -78,34 +48,52 @@ class ReservationController
 
         include __DIR__ . '/../Template/reservation_list.php';
     }
-
-    public function downloadJsonAction(array $request): Response
+    
+    /**
+     * Generates a JSON response containing all reservations as a stream.
+     *
+     * @param array $request The request parameters, including 'search' term.
+     * @return Generator Yields JSON fragments for streaming.
+     */
+    public function downloadJsonAction(array $request): Generator
     {
-        $searchTerm = $request['search'] ?? '';
-        $result = !empty($searchTerm)
-            ? $this->reservationService->searchReservations($searchTerm, 1, PHP_INT_MAX)
-            : $this->reservationService->getPaginatedReservations(1, PHP_INT_MAX);
+        try {
+            $searchTerm = $request['search'] ?? '';
+            error_log('Downloading JSON with search term: ' . $searchTerm);
+            $result = $searchTerm
+                ? $this->reservationService->searchReservations($searchTerm, 1, PHP_INT_MAX)
+                : $this->reservationService->getPaginatedReservations(1, PHP_INT_MAX);
 
-        $reservations = $result['reservations'];
+            error_log('Total reservations: ' . count($result['reservations'] ?? []));
 
-        $jsonData = array_map(function (Reservation $reservation) {
-            return [
-                'locator' => $reservation->getLocator(),
-                'guest' => $reservation->getGuest(),
-                'checkInDate' => $reservation->getCheckInDate()->format('Y-m-d'),
-                'checkOutDate' => $reservation->getCheckOutDate()->format('Y-m-d'),
-                'hotel' => $reservation->getHotel(),
-                'price' => $reservation->getPrice() ?? null,
-                'possibleActions' => $reservation->getPossibleActions(),
-            ];
-        }, $reservations);
+            yield '[';
 
-        $content = json_encode($jsonData, JSON_PRETTY_PRINT);
-        $headers = [
-            'Content-Type: application/json',
-            'Content-Disposition: attachment; filename="reservations.json"',
-        ];
+            $reservations = $result['reservations'] ?? [];
+            $first = true;
 
-        return new Response($headers, $content);
+            foreach ($reservations as $reservation) {
+                if (!$first) {
+                    yield ',';
+                }
+                $first = false;
+
+                $reservationData = [
+                    'locator' => $reservation->getLocator(),
+                    'guest' => $reservation->getGuest(),
+                    'checkInDate' => $reservation->getCheckInDate()->format('Y-m-d'),
+                    'checkOutDate' => $reservation->getCheckOutDate()->format('Y-m-d'),
+                    'hotel' => $reservation->getHotel(),
+                    'price' => $reservation->getPrice(),
+                    'possibleActions' => $reservation->getPossibleActions(),
+                ];
+
+                yield json_encode($reservationData, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+            }
+
+            yield ']';
+        } catch (\Throwable $e) {
+            error_log('Error in downloadJsonAction: ' . $e->getMessage());
+            yield json_encode(['error' => 'Error al generar el JSON: ' . $e->getMessage()]);
+        }
     }
 }
